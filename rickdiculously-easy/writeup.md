@@ -220,7 +220,25 @@ dirsearch -u http://192.168.247.128
 ```
 
 - `-u`: URL objetivo.
-- usa wordlist y múltiples threads.
+- usa wordlist (dirsearch usa su diccionario por defecto) y múltiples threads.
+
+admin
+login
+backup
+uploads
+images
+passwords
+cgi-bin
+dev
+test
+
+Entonces la herramienta prueba cosas como:
+
+http://target/admin
+http://target/login
+http://target/backup
+
+y reporta cuáles existen.
 
 Hallazgos:
 - `/passwords/` (200)
