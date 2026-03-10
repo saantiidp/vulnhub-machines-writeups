@@ -1,5 +1,5 @@
 
-# MrRobot – VulnHub Walkthrough (Detailed)
+# MrRobot – VulnHub Walkthrough
 
 ## Configuración de red
 
