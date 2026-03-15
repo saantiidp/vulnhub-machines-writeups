@@ -430,6 +430,10 @@ Encaja con el nombre del creador de la serie de máquinas Matrix:
 - `unknowndevice64`
 
 Eso refuerza que el `6/4` no era una ruta aleatoria.
+
+
+
+
 ---
 
 ## 12) Descargar `secret.gz` y por qué falla al descomprimir
