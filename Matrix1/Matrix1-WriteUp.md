@@ -4,10 +4,9 @@
 
 ---
 
-## Descripción de la máquina (traducción)
+## Descripción de la máquina 
 
 **Descripción**  
-**Volver arriba**  
 **Matrix** es un desafío **boot2root** de nivel medio. El archivo OVA ha sido probado tanto en **VMware** como en **VirtualBox**.
 
 **Dificultad:** Intermedia
