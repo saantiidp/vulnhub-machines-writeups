@@ -4,7 +4,7 @@
 
 ---
 
-## Descripción de la máquina (traducción)
+## Descripción de la máquina
 
 **Descripción**  
 **Volver arriba**  
@@ -19,14 +19,6 @@
 - **Dirección IP:** asignada automáticamente
 
 **Pista:** Sigue tus intuiciones… ¡y enumera!
-
-### Qué significa esto
-
-- **boot2root** significa que el objetivo final no es solo entrar a la máquina, sino comprometerla completamente hasta llegar a **root**.
-- **Intermediate** ya sugiere que no va a ser una máquina “de una sola vulnerabilidad”. Va a haber varias piezas que encadenar.
-- La pista del autor es importante:  
-  **“Follow your intuitions … and enumerate!”**  
-  Eso te está diciendo que la clave no es correr exploits a ciegas, sino **enumerar bien**, interpretar pistas y probar caminos aunque de primeras parezcan raros.
 
 ---
 
