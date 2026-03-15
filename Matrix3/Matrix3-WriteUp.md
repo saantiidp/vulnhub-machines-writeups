@@ -416,16 +416,20 @@ Ya hay una lógica más clara:
 - primero las letras de `neo`
 - luego posibles números
 
-Dices que revisaste una a una y que la combinación interesante fue:
+Revisamos una a una y que la combinación interesante fue:
 
 - `/Matrix/n/e/o/6/4/`
 
-Dentro encuentras:
+Dentro encuentramos:
 
 ```text
 secret.gz
 ```
+Además, El número `64` se podía intuir.  
+Encaja con el nombre del creador de la serie de máquinas Matrix:
+- `unknowndevice64`
 
+Eso refuerza que el `6/4` no era una ruta aleatoria.
 ---
 
 ## 12) Descargar `secret.gz` y por qué falla al descomprimir
@@ -455,11 +459,7 @@ Esto es algo común en CTF:
 
 Lo correcto aquí es no asumir nada y usar `file`.
 
-Además, aquí el número `64` aparece otra vez.  
-Y encaja también con el nombre del creador / serie que vienes comentando:
-- `unknowndevice64`
 
-Eso refuerza que el `6/4` no era una ruta aleatoria.
 
 ---
 
