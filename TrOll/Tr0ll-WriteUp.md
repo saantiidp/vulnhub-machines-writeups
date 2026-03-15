@@ -4,10 +4,9 @@
 
 ---
 
-## Descripción de la máquina (traducción)
+## Descripción de la máquina
 
 **Descripción**  
-**Volver arriba**  
 **Tr0ll** fue inspirada por el troleo constante de las máquinas dentro de los laboratorios de OSCP.
 
 El objetivo es simple: **obtener root** y conseguir `Proof.txt` del directorio `/root`.
