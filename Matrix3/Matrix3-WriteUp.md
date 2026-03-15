@@ -4,7 +4,7 @@
 
 ---
 
-## Descripción de la máquina (traducción)
+## Descripción de la máquina
 
 **Descripción**  
 **Detalles de la máquina:**  
@@ -18,17 +18,6 @@
 
 **Pista:** Sigue tus intuiciones… ¡y enumera!
 
-### Qué significa esto
-
-- **boot2root** significa que el objetivo no es solo entrar a la máquina, sino llegar hasta **root**.
-- Al pertenecer a la **serie Matrix**, ya hay un patrón temático que puede volver a aparecer:
-  - pistas visuales,
-  - rutas extrañas,
-  - mensajes del universo Matrix,
-  - y la idea de “seguir el camino correcto”.
-- La pista del autor vuelve a insistir en lo mismo:
-  - **Follow your intuitions ... and enumerate!**
-  - Es decir: enumera bien, interpreta lo que ves y no descartes pistas porque parezcan raras.
 
 ---
 
