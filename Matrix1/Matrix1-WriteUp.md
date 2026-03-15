@@ -20,14 +20,6 @@
 **Pista:** Sigue tus intuiciones… ¡y enumera!
 
 Si tienes cualquier pregunta, puedes contactar con el autor en Twitter: `@unknowndevice64`
-
-### Qué significa esto
-
-- **boot2root** indica que la meta final es comprometer la máquina hasta obtener acceso como **root**.
-- **Intermediate** ya te avisa de que no va a ser una máquina lineal ni de un solo fallo evidente.
-- La pista del autor es especialmente importante: **“Follow your intuitions … and enumerate!”**
-- Esta máquina premia la **enumeración cuidadosa**, la interpretación de pistas y el abuso de un entorno restringido.
-
 ---
 
 ## 1) Configuración en NAT y por qué se usa
