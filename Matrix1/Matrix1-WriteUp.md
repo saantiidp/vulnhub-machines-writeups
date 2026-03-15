@@ -20,6 +20,7 @@
 **Pista:** Sigue tus intuiciones… ¡y enumera!
 
 Si tienes cualquier pregunta, puedes contactar con el autor en Twitter: `@unknowndevice64`
+
 ---
 
 ## 1) Configuración en NAT y por qué se usa
