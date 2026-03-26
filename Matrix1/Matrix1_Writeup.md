@@ -26,7 +26,7 @@ nmap descubre:
 
 ## Web inicial
 
-![img]({files/img1.png})
+![img](files/img1.png)
 
 Mensaje clave:
 "Follow the white rabbit"
@@ -42,7 +42,7 @@ Esto es una referencia directa a:
 Se encuentra:
 - /assets
 
-![img]({files/img4.png})
+![img](files/img4.png)
 
 ---
 
@@ -51,7 +51,7 @@ Se encuentra:
 Imagen:
 p0rt_31337.png
 
-![img]({files/img5.png})
+![img](files/img5.png)
 
 Interpretación:
 👉 Nos obliga a ir al puerto 31337
@@ -60,7 +60,7 @@ Interpretación:
 
 ## Segunda web
 
-![img]({files/img6.png})
+![img](files/img6.png)
 
 ---
 
