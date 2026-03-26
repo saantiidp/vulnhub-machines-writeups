@@ -1,4 +1,4 @@
-# Matrix1 Writeup (Extremadamente detallado)
+# Matrix1 Writeup
 
 ## Descripción (traducción)
 
