@@ -1,4 +1,4 @@
-# Matrix 3 — Writeup extremadamente detallado
+# Matrix 3 — Writeup 
 
 ## Descripción original y traducción
 
@@ -417,8 +417,6 @@ Tenemos un usuario y un hash.
 
 ## Herramienta: hashes.com / Hash Identifier
 
-Has pedido que quede explicado en detalle.
-
 ### Qué es `hashes.com`
 
 Es una web con herramientas para trabajar con hashes:
@@ -578,7 +576,7 @@ Aunque la víctima sea Linux, esto no está ahí para ejecutarse allí, sino par
 
 ---
 
-## Ghidra, explicado en detalle
+## Ghidra
 
 ### Qué es Ghidra
 
