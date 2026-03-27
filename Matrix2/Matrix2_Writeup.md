@@ -1,5 +1,5 @@
 
-# Matrix 2 — versión Alzheimer / ultra explicada
+# Matrix 2 
 
 Esta versión mantiene la misma cadena de explotación, pero añade más explicación de herramientas, decisiones y conceptos internos. La idea no es solo que “sepas qué comando lanzar”, sino que entiendas **qué está ocurriendo realmente por debajo** cuando lo ejecutas.
 
